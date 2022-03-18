@@ -8,6 +8,19 @@ t () {
   [[ "$1" == "-t" ]] && shift && exec timeout 60 "$0" "$@"
 }
 
+abort () {
+  echo "$@" >&2
+  exit 1
+}
+
+iso () {
+  local F="$(ls -d RHEL-*"$1"*.iso | tail -n 1)"
+
+  [[ -r "$F" ]] || abort "File not found: $F"
+
+  echo "$F"
+}
+
 t "$@" ||:
 
 [[ "$1" == '-a' ]] && {
@@ -23,7 +36,7 @@ t "$@" ||:
     -accel hvf -accel tcg -cpu cortex-a57 -M virt,highmem=off \
     -drive file=/opt/homebrew/share/qemu/edk2-aarch64-code.fd,if=pflash,format=raw,readonly=on \
     -drive if=virtio,file=disk.qcow2 \
-    -cdrom RHEL-9.0.0-20210316.8-BaseOS-aarch64-boot.iso \
+    -cdrom $(iso aarch64-boot) \
     -nographic \
     -boot d
 
@@ -44,7 +57,7 @@ t "$@" ||:
     -drive "if=pflash,format=raw,file=./edk2-aarch64-code.fd,readonly=on" \
     -drive "if=pflash,format=raw,file=./edk2-arm-vars.fd,discard=on" \
     -drive "if=virtio,format=raw,file=./disk.raw,discard=on" \
-    -cdrom ./RHEL-9.0.0-20210316.8-aarch64-dvd1.iso \
+    -cdrom $(iso aarch64-dvd) \
     -nographic \
     -boot d
 
@@ -71,7 +84,7 @@ t "$@" ||:
     -device virtio-mouse-pci \
     -netdev user,id=net,ipv6=off \
     -drive "if=virtio,format=qcow2,file=disk.qcow2,discard=on" \
-    -cdrom RHEL-9.0.0-20210316.8-BaseOS-x86_64-boot.iso \
+    -cdrom $(iso x86_64-boot) \
     -nographic \
     -boot d
 
@@ -88,7 +101,7 @@ t "$@" ||:
     -accel kvm \
     -smp 1 \
     -drive file=disk.qcow2,format=qcow2 \
-    -cdrom RHEL-9.0.0-20210316.8-BaseOS-x86_64-boot.iso \
+    -cdrom $(iso x86_64-boot) \
     -m 2G \
     -nographic
 
@@ -96,7 +109,7 @@ t "$@" ||:
 }
 
 [[ "$1" == "-b" ]] && {
-  echo "> x86 : uefi"
+  echo "> x86 : uefi-boot"
 
   exec \
   qemu-system-x86_64 \
@@ -106,7 +119,7 @@ t "$@" ||:
     -smp 4 \
     -drive file=disk.qcow2,format=qcow2 \
     -bios /usr/share/edk2/ovmf/OVMF_CODE.fd \
-    -cdrom RHEL-9.0.0-20210316.8-BaseOS-x86_64-boot.iso \
+    -cdrom $(iso x86_64-boot) \
     -accel kvm \
     -serial mon:stdio \
     -device virtio-net-pci,netdev=net \
@@ -122,7 +135,7 @@ t "$@" ||:
 
 
 [[ "$1" == "-u" ]] && {
-  echo "> x86 : uefi"
+  echo "> x86 : uefi-dvd"
 
   exec \
   qemu-system-x86_64 \
@@ -132,7 +145,7 @@ t "$@" ||:
     -smp 4 \
     -drive file=disk.qcow2,format=qcow2 \
     -bios /usr/share/edk2/ovmf/OVMF_CODE.fd \
-    -cdrom ./RHEL-9.0.0-20210316.8-x86_64-dvd1.iso \
+    -cdrom $(iso x86_64-dvd1) \
     -accel kvm \
     -serial mon:stdio \
     -device virtio-net-pci,netdev=net \
@@ -143,9 +156,8 @@ t "$@" ||:
   exit
 
     -append 'console=ttyS0' \
-    -cdrom RHEL-9.0.0-20210316.8-BaseOS-x86_64-boot.iso \
 
-  net.ifnames.prefix=net inst.text console=ttyS0
+  # net.ifnames.prefix=net inst.text console=ttyS0
 
 }
 
