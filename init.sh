@@ -5,8 +5,8 @@ set -x
 
 [[ -n "$1" ]]
 
-rm disk.raw
-rm disk.qcow2
+[[ -r disk.raw ]] && rm disk.raw
+[[ -r disk.qcow2 ]] && rm disk.qcow2
 
 [[ "$1" == "-r" ]] && {
   qemu-img create -f raw disk.raw 10G
