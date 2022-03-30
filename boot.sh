@@ -28,10 +28,15 @@ iso () {
   echo "$F"
 }
 
+warn () {
+  echo "Warning:" "$@" >&2
+ }
+
 t "$@" ||:
 
 [[ "$1" == '-a' ]] && {
   echo "> aarch"
+  warn "does not work yet"
 
   #cp $(dirname $(which qemu-img))/../share/qemu/edk2-aarch64-code.fd .
   #cp $(dirname $(which qemu-img))/../share/qemu/edk2-arm-vars.fd .
@@ -78,6 +83,7 @@ t "$@" ||:
 
 [[ "$1" == "-x" ]] && {
   echo "> x86"
+  warn "does not work yet"
 
   exec \
   qemu-system-x86_64 \
@@ -201,6 +207,5 @@ qemu-system-aarch64 \
   -drive file=/Users/pvalena/.local/share/containers/podman/machine/qemu/podman-machine-default_ovmf_vars.fd,if=pflash,format=raw \
   -drive if=virtio,file=/Users/pvalena/.local/share/containers/podman/machine/qemu/podman-machine-default_fedora-coreos-35.20220131.2.0-qemu.aarch64.qcow2 \
   -display none
-
 
 
