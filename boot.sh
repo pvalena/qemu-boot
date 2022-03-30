@@ -35,7 +35,7 @@ t "$@" ||:
     -device virtio-serial \
     -accel hvf -accel tcg -cpu cortex-a57 -M virt,highmem=off \
     -drive file=/opt/homebrew/share/qemu/edk2-aarch64-code.fd,if=pflash,format=raw,readonly=on \
-    -drive if=virtio,file=disk.qcow2 \
+    -drive if=virtio,file=disk${2:+-$2}.qcow2 \
     -cdrom $(iso aarch64-boot) \
     -nographic \
     -boot d
@@ -83,7 +83,7 @@ t "$@" ||:
     -device virtio-net-pci,netdev=net \
     -device virtio-mouse-pci \
     -netdev user,id=net,ipv6=off \
-    -drive "if=virtio,format=qcow2,file=disk.qcow2,discard=on" \
+    -drive "if=virtio,format=qcow2,file=disk${2:+-$2}.qcow2,discard=on" \
     -cdrom $(iso x86_64-boot) \
     -nographic \
     -boot d
@@ -100,7 +100,7 @@ t "$@" ||:
     -cpu max \
     -accel kvm \
     -smp 1 \
-    -drive file=disk.qcow2,format=qcow2 \
+    -drive file=disk${2:+-$2}.qcow2,format=qcow2 \
     -cdrom $(iso x86_64-boot) \
     -m 2G \
     -nographic
@@ -117,7 +117,7 @@ t "$@" ||:
     -m 8G \
     -cpu max \
     -smp 4 \
-    -drive file=disk.qcow2,format=qcow2 \
+    -drive file=disk${2:+-$2}.qcow2,format=qcow2 \
     -bios /usr/share/edk2/ovmf/OVMF_CODE.fd \
     -cdrom $(iso x86_64-boot) \
     -accel kvm \
@@ -143,7 +143,7 @@ t "$@" ||:
     -m 8G \
     -cpu max \
     -smp 4 \
-    -drive file=disk.qcow2,format=qcow2 \
+    -drive file=disk${2:+-$2}.qcow2,format=qcow2 \
     -bios /usr/share/edk2/ovmf/OVMF_CODE.fd \
     -cdrom $(iso x86_64-dvd1) \
     -accel kvm \
