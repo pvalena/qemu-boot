@@ -1,3 +1,10 @@
+#!/usr/bin/env bash
+#
+# Script for booting with QEMU with various architectures
+#
+#   You need to modify image file
+#   and create disk.qcow2 or disk.raw yourself
+#
 
 bash -n "$0" || exit 1
 set -xe
