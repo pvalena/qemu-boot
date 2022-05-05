@@ -5,6 +5,11 @@
 #   You need to modify image file
 #   and create disk.qcow2 or disk.raw yourself
 #
+#   https://gist.github.com/500c3779a18976ceb394a87a08708758
+#
+#   I personally use '-u'.
+#
+#
 
 bash -n "$0" || exit 1
 set -xe
@@ -30,7 +35,14 @@ iso () {
 
 warn () {
   echo "Warning:" "$@" >&2
- }
+}
+
+ovmf () {
+  echo "OVMF is needed to boot uefi images"
+
+  [[ "$(whoami)" == root ]] && SUDO=sudo || SUDO=
+  $SUDO dnf install '/usr/share/edk2/ovmf/OVMF_CODE.fd'
+}
 
 t "$@" ||:
 
@@ -124,6 +136,8 @@ t "$@" ||:
 [[ "$1" == "-b" ]] && {
   echo "> x86 : uefi-boot"
 
+  ovmf
+
   exec \
   qemu-system-x86_64 \
     -boot menu=on \
@@ -149,6 +163,8 @@ t "$@" ||:
 
 [[ "$1" == "-u" ]] && {
   echo "> x86 : uefi-dvd"
+
+  ovmf
 
   exec \
   qemu-system-x86_64 \
