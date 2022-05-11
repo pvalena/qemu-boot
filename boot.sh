@@ -7,8 +7,20 @@
 #
 #   https://gist.github.com/500c3779a18976ceb394a87a08708758
 #
+# Usage:
+#
+#   ./boot.sh [option] DISK ISO
+#
+#   See the blocks in code for options.
 #   I personally use '-u'.
 #
+# Examples:
+#
+#   ./boot.sh -u fedora36 Fedora-Server-dvd
+#
+#   ./boot.sh -u '' 'Rawhide-20220505.n.0'
+#
+#   ./boot.sh -u 'rhel9-22-03-18'
 #
 
 bash -n "$0" || exit 1
@@ -26,9 +38,10 @@ abort () {
 }
 
 iso () {
-  local F="$(ls -d RHEL-*"$1"*.iso | tail -n 1)"
+  local F="$(ls -d *"$1"*.iso | tail -n 1)"
 
-  [[ -r "$F" ]] || abort "File not found: $F"
+  [[ -n "$F" ]] || abort "Image file not found: *\"${1}\"*.iso"
+  [[ -r "$F" ]] || abort "Image missing or unreadable: $IMG"
 
   echo "$F"
 }
@@ -38,15 +51,36 @@ warn () {
 }
 
 ovmf () {
+  local f='/usr/share/edk2/ovmf/OVMF_CODE.fd'
+  [[ -r "$f" ]] && return 0
+
   echo "OVMF is needed to boot uefi images"
 
-  [[ "$(whoami)" == root ]] && SUDO=sudo || SUDO=
-  $SUDO dnf install '/usr/share/edk2/ovmf/OVMF_CODE.fd'
+  [[ "$(whoami)" == root ]] && SUDO= || SUDO=sudo
+  $SUDO $(which dnf) install '/usr/share/edk2/ovmf/OVMF_CODE.fd'
 }
+
+ARG="$1"
+shift
+[[ -z "$ARG" ]] && abort "Arg missing!"
+
+[[ -n "$1" ]] && {
+  DSK="$1"
+}
+DSK="disk${DSK:+-$DSK}.qcow2"
+[[ -r "$DSK" ]] || abort "Disk missing or unreadable: $DSK"
+
+shift ||:
+
+[[ -n "$1" ]] && {
+  IMG="$1"
+  shift
+}
+IMG="$(iso ${IMG:-\-dvd\-})"
 
 t "$@" ||:
 
-[[ "$1" == '-a' ]] && {
+[[ "$ARG" == '-a' ]] && {
   echo "> aarch"
   warn "does not work yet"
 
@@ -59,7 +93,7 @@ t "$@" ||:
     -device virtio-serial \
     -accel hvf -accel tcg -cpu cortex-a57 -M virt,highmem=off \
     -drive file=/opt/homebrew/share/qemu/edk2-aarch64-code.fd,if=pflash,format=raw,readonly=on \
-    -drive if=virtio,file=disk${2:+-$2}.qcow2 \
+    -drive if=virtio,file="$DSK" \
     -cdrom $(iso aarch64-boot) \
     -nographic \
     -boot d
@@ -93,8 +127,8 @@ t "$@" ||:
 
 }
 
-[[ "$1" == "-x" ]] && {
-  echo "> x86"
+[[ "$ARG" == "-x" ]] && {
+  echo "> x86 : non-uefi"
   warn "does not work yet"
 
   exec \
@@ -108,16 +142,16 @@ t "$@" ||:
     -device virtio-net-pci,netdev=net \
     -device virtio-mouse-pci \
     -netdev user,id=net,ipv6=off \
-    -drive "if=virtio,format=qcow2,file=disk${2:+-$2}.qcow2,discard=on" \
-    -cdrom $(iso x86_64-boot) \
+    -drive "if=virtio,format=qcow2,file=${DSK},discard=on" \
+    -cdrom "${IMG}" \
     -nographic \
     -boot d
 
   exit
 }
 
-[[ "$1" == "-f" ]] && {
-  echo "> x86 : fedora"
+[[ "$ARG" == "-f" ]] && {
+  echo "> x86 : non-uefi"
 
   exec \
   qemu-system-x86_64 \
@@ -125,16 +159,16 @@ t "$@" ||:
     -cpu max \
     -accel kvm \
     -smp 1 \
-    -drive file=disk${2:+-$2}.qcow2,format=qcow2 \
-    -cdrom $(iso x86_64-boot) \
+    -drive "file=${DSK},format=qcow2" \
+    -cdrom "$IMG" \
     -m 2G \
     -nographic
 
   exit
 }
 
-[[ "$1" == "-b" ]] && {
-  echo "> x86 : uefi-boot"
+[[ "$ARG" == "-u" ]] && {
+  echo "> x86 : uefi"
 
   ovmf
 
@@ -144,37 +178,9 @@ t "$@" ||:
     -m 8G \
     -cpu max \
     -smp 4 \
-    -drive file=disk${2:+-$2}.qcow2,format=qcow2 \
+    -drive "file=${DSK},format=qcow2" \
     -bios /usr/share/edk2/ovmf/OVMF_CODE.fd \
-    -cdrom $(iso x86_64-boot) \
-    -accel kvm \
-    -serial mon:stdio \
-    -device virtio-net-pci,netdev=net \
-    -netdev user,id=net,ipv6=off \
-    -nographic \
-    -chardev vc,id=vc1,width=$(tput cols),height=$(tput lines) -mon chardev=vc1
-
-  exit
-
-  # kernel: net.ifnames.prefix=net inst.text console=ttyS0
-
-}
-
-
-[[ "$1" == "-u" ]] && {
-  echo "> x86 : uefi-dvd"
-
-  ovmf
-
-  exec \
-  qemu-system-x86_64 \
-    -boot menu=on \
-    -m 8G \
-    -cpu max \
-    -smp 4 \
-    -drive file=disk${2:+-$2}.qcow2,format=qcow2 \
-    -bios /usr/share/edk2/ovmf/OVMF_CODE.fd \
-    -cdrom $(iso x86_64-dvd1) \
+    -cdrom "${IMG}" \
     -accel kvm \
     -serial mon:stdio \
     -device virtio-net-pci,netdev=net \
@@ -186,13 +192,11 @@ t "$@" ||:
 
     -append 'console=ttyS0' \
 
-  # net.ifnames.prefix=net inst.text console=ttyS0
+  # kernel: net.ifnames.prefix=net inst.text console=ttyS0
 
 }
 
-[[ -n "$1" ]]
-
-exit
+abort "Unknown arg: $ARG"
 
 # Unused
 
