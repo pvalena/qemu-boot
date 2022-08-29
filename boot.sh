@@ -14,6 +14,10 @@
 #   See the blocks in code for options.
 #   I personally use '-u'.
 #
+#   Don't forget to append to kernel command line:
+#      inst.text console=ttyS0
+#   for install.
+#
 # Examples:
 #
 #   ./boot.sh -u fedora36 Fedora-Server-dvd
