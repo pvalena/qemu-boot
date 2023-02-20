@@ -9,22 +9,34 @@
 #
 # Usage:
 #
-#   ./boot.sh [option] DISK ISO
+#   ./boot.sh PRESET [option] DISK ISO
 #
 #   See the blocks in code for options.
-#   I personally use '-u'.
+#
+#   I personally use 'UEFI' PRESET, but there's also
+#   'NET' for booting from network (see net.sh for network
+#   config example) and others (see code).
 #
 #   Don't forget to append to kernel command line:
 #      inst.text console=ttyS0
 #   for install.
 #
+# Options:
+#
+#   -d    add device (supply one as next arg)
+#   -n    add nic (supply one as next arg)
+#   -t    set 1 minute timeout
+#
+#
 # Examples:
 #
-#   ./boot.sh -u fedora36 Fedora-Server-dvd
+#   ./boot.sh UEFI fedora36 Fedora-Server-dvd
 #
-#   ./boot.sh -u '' 'Rawhide-20220505.n.0'
+#   ./boot.sh UEFI '' 'Rawhide-20220505.n.0'
 #
-#   ./boot.sh -u 'rhel9-22-03-18'
+#   ./boot.sh UEFI 'rhel-22-03-18'
+#
+#   ./boot.sh -n bridge,br=virbr0,id=n2 UEFI 'rhel9-test' -
 #
 
 ## Init
