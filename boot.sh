@@ -23,9 +23,9 @@
 #
 # Options:
 #
+#   -t    set 1 minute timeout (needs to go before all other args)
 #   -d    add device (supply one as next arg)
 #   -n    add nic (supply one as next arg)
-#   -t    set 1 minute timeout
 #
 #
 # Examples:
@@ -90,6 +90,11 @@ DEFAULT_NET='-device virtio-net-pci,netdev=net0 -netdev user,id=net0,ipv6=off'
 
 ## Args
 
+[[ "$1" == "-t" ]] && {
+  shift
+  exec timeout 60 "$0" "$@"
+}
+
 # Pre-switches
 [[ "$1" == "-d" ]] && {
   DEV="-device $2"
@@ -106,11 +111,6 @@ DEFAULT_NET='-device virtio-net-pci,netdev=net0 -netdev user,id=net0,ipv6=off'
     || NET=
   :
 } || NET="$DEFAULT_NET"
-
-[[ "$1" == "-t" ]] && {
-  shift
-  exec timeout 60 "$0" "$@"
-}
 
 
 # Main arg
@@ -140,6 +140,8 @@ shift ||:
   IMG="${IMG:+-cdrom $IMG}"
   :
 } || IMG=''
+
+[[ -z "$1" ]] || abort "Unknown arg: $1"
 
 ## Execute
 
