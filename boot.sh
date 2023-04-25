@@ -85,7 +85,8 @@ escape () {
 
 ## Const
 
-DEFAULT_NET='-device virtio-net-pci,netdev=net0 -netdev user,id=net0,ipv6=off'
+DEFAULT_NET='-nic user,model=virtio-net-pci'
+#DEFAULT_NET='-device virtio-net-pci,netdev=net0 -netdev user,id=net0,ipv6=off'
 
 
 ## Args
@@ -120,12 +121,15 @@ shift
   && abort "Arg missing or invalid!"
 
 # Disk image string
-[[ -n "$1" ]] && {
-  DSK="$1"
-  shift
-}
-DSK="disk${DSK:+-$DSK}.qcow2"
-[[ -r "$DSK" ]] || abort "Disk missing or unreadable: $DSK"
+[[ "${1:0:1}" != "-" ]] && {
+  [[ -n "$1" ]] && {
+    DSK="$1"
+    shift
+  }
+  [[ -r "$DSK" ]] || DSK="disk${DSK:+-$DSK}.qcow2"
+  [[ -r "$DSK" ]] || abort "Disk missing or unreadable: $DSK"
+  :
+} || DSK=''
 
 # Shift even if empty
 shift ||:
