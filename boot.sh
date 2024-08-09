@@ -9,7 +9,7 @@
 #
 # Usage:
 #
-#   ./boot.sh PRESET [option] DISK ISO
+#   ./boot.sh PRESET [option] DISK_file [ISO_file]
 #
 #   See the blocks in code for options.
 #

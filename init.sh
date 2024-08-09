@@ -1,20 +1,39 @@
+#!/usr/bin/env zsh
 
-bash -n "$0" || exit 1
+set -xe
 
-set -x
+zsh -n "$0"
 
-[[ -n "$1" ]]
+[[ "$1" == '-n' ]] && {
+  RM=y
+  shift ||:
+  :
+} || RM=
 
-[[ -r disk.raw ]] && rm disk.raw
-[[ -r disk.qcow2 ]] && rm disk.qcow2
+[[ "$1" == '-r' ]] && {
+  RAW=y
+  shift ||:
+  :
+} || RAW=
 
-[[ "$1" == "-r" ]] && {
-  qemu-img create -f raw disk.raw 10G
-  exit
+n="${1:-}"
+
+[[ -n "$n" ]]
+
+[[ -n "$RAW" ]] && {
+  f=raw
+  :
+} || f=qcow2
+
+d="disk-${n}.${f}"
+
+[[ -n "$RM" ]] && {
+  rm -f "$d" ||:
+  :
+} || {
+
+  [[ -r "$d" ]] && exit 2
 }
 
-[[ "$1" == "-q" ]] && {
-  qemu-img create -f qcow2 disk.qcow2 10G
-  exit
-}
+qemu-img create -f "$f" "$d" 10G
 
