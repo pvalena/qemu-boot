@@ -26,6 +26,8 @@ o="centos-stream-${r}-${a}"
 
 ##
 
+b="$(printf "%08d" $b)"
+
 u="https://download.copr.fedorainfracloud.org/results/pvalena/dracut/${o}/${b}-dracut/"
 
 s="-${v}.el${r}.${a}.rpm"
@@ -44,4 +46,4 @@ l="$(
 
 echo "$l"
 
-dnf install -y $l || echo $l | xargs -rn1 curl -sOLk
+dnf install --disablerepo='*' -y $l || echo $l | xargs -rn1 curl -sOLk
